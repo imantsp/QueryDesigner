@@ -46,6 +46,11 @@ namespace QueryDesignerCore.Expressions
         private static readonly MethodInfo StartsMethod = StringType.GetRuntimeMethod("StartsWith", new[] { StringType });
 
         /// <summary>
+        /// Info about "EndsWith" method.
+        /// </summary>
+        private static readonly MethodInfo EndsMethod = StringType.GetRuntimeMethod("EndsWith", new[] { StringType });
+
+        /// <summary>
         /// Info about "Contains" method.
         /// </summary>
         private static readonly MethodInfo ContainsMethod = StringType.GetRuntimeMethod("Contains", new[] { StringType });
@@ -220,16 +225,22 @@ namespace QueryDesignerCore.Expressions
             switch (filter.FilterType)
             {
                 case WhereFilterType.Equal:
-                    return Expression.Equal(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+                    return IsEqual(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
 
                 case WhereFilterType.NotEqual:
-                    return Expression.NotEqual(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+                    return IsNotEqual(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
 
                 case WhereFilterType.IsNull:
                     return IsNull(prop);
 
                 case WhereFilterType.IsNotNull:
                     return IsNotNull(prop);
+
+                case WhereFilterType.IsEmpty:
+                    return IsEmpty(prop);
+
+                case WhereFilterType.IsNotEmpty:
+                    return IsNotEmpty(prop);
 
                 case WhereFilterType.LessThan:
                     return Expression.LessThan(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
@@ -248,6 +259,12 @@ namespace QueryDesignerCore.Expressions
 
                 case WhereFilterType.NotStartsWith:
                     return Expression.Not(Expression.AndAlso(IsNotNull(prop), Expression.Call(prop, StartsMethod, Expression.Constant(filter.Value, StringType))));
+
+                case WhereFilterType.EndsWith:
+                    return Expression.AndAlso(IsNotNull(prop), Expression.Call(prop, EndsMethod, Expression.Constant(filter.Value, StringType)));
+
+                case WhereFilterType.NotEndsWith:
+                    return Expression.Not(Expression.AndAlso(IsNotNull(prop), Expression.Call(prop, EndsMethod, Expression.Constant(filter.Value, StringType))));
 
                 case WhereFilterType.Contains:
                     return Expression.AndAlso(IsNotNull(prop), Expression.Call(prop, ContainsMethod, Expression.Constant(filter.Value, StringType)));
@@ -366,6 +383,42 @@ namespace QueryDesignerCore.Expressions
         private static Expression IsNotNull(Expression propertyExp)
         {
             return Expression.Not(IsNull(propertyExp));
+        }
+
+        private static Expression IsEqual(Expression propertyExp, Expression valueToCompareExpr)
+        {
+            return Expression.Equal(propertyExp, valueToCompareExpr);
+        }
+
+        private static Expression IsNotEqual(Expression propertyExp, Expression valueToCompareExpr)
+        {
+            return Expression.NotEqual(propertyExp, valueToCompareExpr);
+        }
+
+        // In this approach 'empty' means: nullable or empty string('') for strings, null for other types
+        private static Expression IsEmpty(Expression propertyExp)
+        {
+            if (propertyExp.Type == typeof(string))
+            {
+                return Expression.OrElse(IsNull(propertyExp), IsEqual(propertyExp, Expression.Constant(string.Empty)));
+            }
+            else
+            {
+                return IsNull(propertyExp);
+            }
+        }
+
+        // In this approach 'not empty' means: not nullable and not empty string('') for strings, not null for other types
+        private static Expression IsNotEmpty(Expression propertyExp)
+        {
+            if (propertyExp.Type == typeof(string))
+            {
+                return Expression.AndAlso(IsNotNull(propertyExp), IsNotEqual(propertyExp, Expression.Constant(string.Empty)));
+            }
+            else
+            {
+                return IsNotNull(propertyExp);
+            }
         }
     }
 }
