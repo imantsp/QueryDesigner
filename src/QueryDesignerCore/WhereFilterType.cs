@@ -11,6 +11,26 @@
         None,
 
         /// <summary>
+        /// The field is null.
+        /// </summary>
+        IsNull,
+
+        /// <summary>
+        /// The field is not null.
+        /// </summary>
+        IsNotNull,
+
+        /// <summary>
+        /// The field is empty.
+        /// </summary>
+        IsEmpty,
+
+        /// <summary>
+        /// The field is not empty.
+        /// </summary>
+        IsNotEmpty,
+
+        /// <summary>
         /// The field is equal to the value.
         /// </summary>
         Equal,
@@ -59,6 +79,16 @@
         /// The field is not start with value.
         /// </summary>
         NotStartsWith,
+
+        /// <summary>
+        /// The field ends with value.
+        /// </summary>
+        EndsWith,
+
+        /// <summary>
+        /// The field does not end with value.
+        /// </summary>
+        NotEndsWith,
 
         /// <summary>
         /// Collection contains data.
