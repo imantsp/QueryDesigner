@@ -1,8 +1,4 @@
-﻿//------------------------------------------------------------------
-// <author>Жуков Владислав</author>
-//------------------------------------------------------------------
-
-using System;
+﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -91,6 +87,12 @@ namespace QueryDesignerCore.Expressions
             typeof(TimeSpan?),
             typeof(bool),
             typeof(bool?),
+            typeof(byte?),
+            typeof(sbyte?),
+            typeof(short),
+            typeof(short?),
+            typeof(ushort),
+            typeof(ushort?),
             typeof(int),
             typeof(int?),
             typeof(uint),
