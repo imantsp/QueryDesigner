@@ -11,6 +11,16 @@
         None,
 
         /// <summary>
+        /// The field is null.
+        /// </summary>
+        IsNull,
+
+        /// <summary>
+        /// The field is not null.
+        /// </summary>
+        IsNotNull,
+
+        /// <summary>
         /// The field is equal to the value.
         /// </summary>
         Equal,

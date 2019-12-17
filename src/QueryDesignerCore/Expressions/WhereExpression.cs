@@ -173,7 +173,7 @@ namespace QueryDesignerCore.Expressions
         {
             if (filter == null)
                 throw new ArgumentNullException(nameof(filter));
-            
+
             if (filter.FilterType == WhereFilterType.None || string.IsNullOrWhiteSpace(filter.Field))
                 throw new ArgumentException("Filter type cannot be None for single filter.");
             var s = filter.Field.Split('.');
@@ -220,48 +220,40 @@ namespace QueryDesignerCore.Expressions
             switch (filter.FilterType)
             {
                 case WhereFilterType.Equal:
-                    return Expression.Equal(
-                        prop,
-                        Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+                    return Expression.Equal(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
 
                 case WhereFilterType.NotEqual:
-                    return Expression.NotEqual(
-                        prop,
-                        Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+                    return Expression.NotEqual(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+
+                case WhereFilterType.IsNull:
+                    return IsNull(prop);
+
+                case WhereFilterType.IsNotNull:
+                    return IsNotNull(prop);
 
                 case WhereFilterType.LessThan:
-                    return Expression.LessThan(
-                        prop,
-                        Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+                    return Expression.LessThan(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
 
                 case WhereFilterType.GreaterThan:
-                    return Expression.GreaterThan(
-                        prop,
-                        Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+                    return Expression.GreaterThan(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
 
                 case WhereFilterType.LessThanOrEqual:
-                    return Expression.LessThanOrEqual(
-                        prop,
-                        Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+                    return Expression.LessThanOrEqual(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
 
                 case WhereFilterType.GreaterThanOrEqual:
-                    return Expression.GreaterThanOrEqual(
-                        prop,
-                        Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
+                    return Expression.GreaterThanOrEqual(prop, Expression.Constant(TryCastFieldValueType(filter.Value, prop.Type)));
 
                 case WhereFilterType.StartsWith:
-                    return Expression.Call(prop, StartsMethod, Expression.Constant(filter.Value, StringType));
+                    return Expression.AndAlso(IsNotNull(prop), Expression.Call(prop, StartsMethod, Expression.Constant(filter.Value, StringType)));
 
                 case WhereFilterType.NotStartsWith:
-                    return Expression.Not(
-                        Expression.Call(prop, StartsMethod, Expression.Constant(filter.Value, StringType)));
+                    return Expression.Not(Expression.AndAlso(IsNotNull(prop), Expression.Call(prop, StartsMethod, Expression.Constant(filter.Value, StringType))));
 
                 case WhereFilterType.Contains:
-                    return Expression.Call(prop, ContainsMethod, Expression.Constant(filter.Value, StringType));
+                    return Expression.AndAlso(IsNotNull(prop), Expression.Call(prop, ContainsMethod, Expression.Constant(filter.Value, StringType)));
 
                 case WhereFilterType.NotContains:
-                    return Expression.Not(
-                        Expression.Call(prop, ContainsMethod, Expression.Constant(filter.Value, StringType)));
+                    return Expression.Not(Expression.AndAlso(IsNotNull(prop), Expression.Call(prop, ContainsMethod, Expression.Constant(filter.Value, StringType))));
 
                 case WhereFilterType.Any:
                     if (IsEnumerable(prop))
@@ -353,6 +345,27 @@ namespace QueryDesignerCore.Expressions
                 p = p.DeclaringType.GetRuntimeProperty(name);
             }
             return p;
+        }
+
+        private static Expression IsNull(Expression propertyExp)
+        {
+            var isNullable = !propertyExp.Type.IsValueType || Nullable.GetUnderlyingType(propertyExp.Type) != null;
+
+            if (isNullable)
+            {
+                var someValue = Expression.Constant(null, propertyExp.Type);
+
+                Expression exOut = Expression.Equal(propertyExp, someValue);
+
+                return exOut;
+            }
+
+            return Expression.Equal(Expression.Constant(true, typeof(bool)), Expression.Constant(false, typeof(bool)));
+        }
+
+        private static Expression IsNotNull(Expression propertyExp)
+        {
+            return Expression.Not(IsNull(propertyExp));
         }
     }
 }
